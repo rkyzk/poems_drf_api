@@ -1,74 +1,40 @@
-from django.http import Http404
-from rest_framework import status, permissions
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from django.db.models import Count
+from rest_framework import generics, permissions
+from poems_drf_api.permissions import IsOwnerOrReadOnly
 from .models import Poem
 from .serializers import PoemSerializer
-from poems_drf_api.permissions import IsOwnerOrReadOnly
 
 
-class PoemList(APIView):
+class PoemList(generics.ListCreateAPIView):
+    """
+    List poems or create a poem if logged in.
+    """
     serializer_class = PoemSerializer
-    permission_classes = [
-        permissions.IsAuthenticatedOrReadOnly
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Poem.objects.annotate(
+        likes_count=Count('like', distinct=True),
+        comments_count=Count('comment', distinct=True)
+    ).order_by('-created_at')
+    filter_backends = [
+        filters.OrderingFilter
+    ]
+    ordering_fields = [
+        'likes_count',
+        'comments_count',
+        'like_created_at',
     ]
 
-    def get(self, request):
-        poems = Poem.objects.all()
-        serializer = PoemSerializer(
-            poems, many=True, context={'request': request}
-        )
-        return Response(serializer.data)
-
-    def post(self, request):
-        serializer = PoemSerializer(
-            data=request.data, context={'request': request}
-        )
-        if serializer.is_valid():
-            serializer.save(owner=request.user)
-            return Response(
-                serializer.data, status=status.HTTP_201_CREATED
-            )
-        return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST
-        )
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
 
 
-class PoemDetail(APIView):
+class PoemDetail(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve a poem, or update or delete it by id if you own it.
+    """
     permission_classes = [IsOwnerOrReadOnly]
     serializer_class = PoemSerializer
-
-    def get_object(self, pk):
-        """handle the case in which poem with the given id doesn't exit."""
-        try:
-            poem = Poem.objects.get(pk=pk)
-            self.check_object_permissions(self.request, poem)
-            return poem
-        except Poem.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk):
-        poem = self.get_object(pk)
-        serializer = PoemSerializer(
-            poem, context={'request': request}
-        )
-        return Response(serializer.data)
-
-    def put(self, request, pk):
-        poem = self.get_object(pk)
-        serializer = PoemSerializer(
-            poem, data=request.data, context={'request': request}
-        )
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(
-            serializer.errors, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    def delete(self, request, pk):
-        poem = self.get_object(pk)
-        poem.delete()
-        return Response(
-            status=status.HTTP_204_NO_CONTENT
-        )
+    queryset = Poem.objects.annotate(
+        likes_count=Count('like', distinct=True),
+        comments_count=Count('comment', distinct=True)
+    ).order_by('-created_at')
