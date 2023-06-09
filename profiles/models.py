@@ -7,7 +7,8 @@ class Profile(models.Model):
     owner = models.OneToOneField(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    favorite_poems = models.TextField(blank=True)
+    display_name = models.CharField(max_length=25, blank=True)
+    about_me = models.TextField(blank=True)
     image = models.ImageField(
         upload_to='images/', default='../default_profile_qdjgyp'
     )
@@ -17,6 +18,15 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.owner}'s profile"
+
+    def save(self, *args, **kwargs):
+        """
+        If display name is left blank, set username to it.
+        """
+        if not self.display_name:
+            # set username as display name
+            self.display_name = self.owner.username
+        super().save(*args, **kwargs)
 
 
 def create_profile(sender, instance, created, **kwargs):
