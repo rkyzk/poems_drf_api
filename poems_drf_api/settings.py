@@ -58,7 +58,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 'DEV' in os.environ
 
-ALLOWED_HOSTS = ['8000-rkyzk-poemsdrfapi-it4vefu8m1d.ws-us99.gitpod.io', 'your-poetry.herokuapp.com']
+ALLOWED_HOSTS = ['8000-rkyzk-poemsdrfapi-it4vefu8m1d.ws-us99.gitpod.io', 'poems-drf-api.herokuapp.com']
 
 
 # Application definition
