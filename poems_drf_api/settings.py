@@ -38,6 +38,8 @@ REST_FRAMEWORK = {
         'PAGE_SIZE': 10,
         'DATETIME_FORMAT': '%d %b %Y',
 }
+
+# in production only send JSON and no html
 if 'DEV' not in os.environ:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
         'rest_framework.renderers.JSONRenderer',
@@ -63,7 +65,10 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 'DEV' in os.environ
 
-ALLOWED_HOSTS = ['8000-rkyzk-poemsdrfapi-it4vefu8m1d.ws-us99.gitpod.io', 'poems-drf-api.herokuapp.com']
+ALLOWED_HOSTS = [
+    '8000-rkyzk-poemsdrfapi-it4vefu8m1d.ws-us99.gitpod.io',
+    os.environ.get('ALLOWED_HOST'),
+    ]
 
 if 'CLIENT_ORIGIN' in os.environ:
     CORS_ALLOWED_ORIGINS = [
